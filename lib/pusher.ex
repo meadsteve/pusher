@@ -1,6 +1,9 @@
 defmodule Pusher do
-  use HTTPoison.Base
+  @moduledoc """
+  Client for the rest API of https://pusher.com
+  """
 
+  use HTTPoison.Base
   alias Signaturex.CryptoHelper
 
   @doc """
@@ -8,13 +11,19 @@ defmodule Pusher do
   """
   def trigger(event, data, channels, socket_id \\ nil) do
     data = encoded_data(data)
-    body = case socket_id do
-      nil -> %{name: event, channels: channel_list(channels), data: data}
-      _ -> %{name: event, channels: channel_list(channels), data: data, socket_id: socket_id}
-    end |> JSX.encode!
+    body = event_body(event, data, channels, socket_id)
+      |> JSX.encode!
     headers = %{"Content-type" => "application/json"}
     response = post!("/apps/#{app_id}/events", body, headers)
     response.status_code
+  end
+
+  defp event_body(event, data, channels, nil) do
+    %{name: event, channels: channel_list(channels), data: data}
+  end
+  defp event_body(event, data, channels, socket_id) do
+    event_body(event, data, channels, nil)
+      |> Dict.put(:socket_id, socket_id)
   end
 
   defp channel_list(channels) when is_list(channels), do: channels
@@ -36,7 +45,8 @@ defmodule Pusher do
   Get info related to the `channel`
   """
   def channel(channel) do
-    response = get!("/apps/#{app_id}/channels/#{channel}", %{}, qs: %{info: "subscription_count"})
+    uri = "/apps/#{app_id}/channels/#{channel}"
+    response = get!(uri, %{}, qs: %{info: "subscription_count"})
 
     {response.status_code, response.body}
   end
@@ -58,9 +68,8 @@ defmodule Pusher do
     "#{host}:#{port}"
   end
 
-  defp process_response_body(body) do
-    unless body == "", do: body |> JSX.decode!, else: nil
-  end
+  defp process_response_body(""), do: nil
+  defp process_response_body(body), do: body |> JSX.decode!
 
   @doc """
   More info at: http://pusher.com/docs/rest_api#authentication
