@@ -32,7 +32,8 @@ defmodule Pusher.Mixfile do
     [ {:httpoison, "~> 0.6.0"},
       {:signaturex, "~> 0.0.7"},
       {:exjsx, "~> 3.0"},
-      {:meck, "~> 0.8.2", only: :test } ]
+      {:meck, "~> 0.8.2", only: :test },
+      {:dogma, "~> 0.0.2", only: [:dev, :test] } ]
    end
 
    defp package do

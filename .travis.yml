@@ -11,4 +11,6 @@ elixir:
   - 1.0.5
 env:
   - MIX_ENV=test
-script: mix test --no-start
+script:
+  - mix test --no-start
+  - mix dogma
